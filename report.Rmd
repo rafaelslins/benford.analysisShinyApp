@@ -1,0 +1,24 @@
+---
+title: "Example Report"
+output: pdf_document
+params:
+  results_benford: NA
+  leading_digits: NA
+  suspect_records: NA
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, echo=FALSE}
+plot(params$results_benford)
+```
+
+```{r, echo=FALSE}
+params$results_benford
+```
+
+
+
+
