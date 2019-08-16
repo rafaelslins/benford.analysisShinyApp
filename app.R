@@ -12,9 +12,13 @@ ui <- navbarPage("Benford Analysis",
   tabPanel("English",
    sidebarLayout(
       sidebarPanel(width = 3,
-         fileInput("records", strong("load dataset (.csv)"), multiple = FALSE),
+         fileInput("records", strong("Load dataset (.csv)"), multiple = FALSE),
          uiOutput('data_column'),
-         sliderInput("digits", strong("number of digits to test:"), 1, 3, 1),
+         sliderInput("digits", strong("Number of digits to test:"), 1, 3, 1),
+         radioButtons("sign", strong("Sign:"),
+                      c("Positive" = "positive",
+                        "Negative" = "negative",
+                        "Both" = "both"), inline = T),
          fluidRow(
            #column(12, align = "center" , submitButton("Refresh"), br()),
            #column(12, align = "center" , actionButton("reflesh", "Action button", class = "btn-primary")), br(),
@@ -23,14 +27,13 @@ ui <- navbarPage("Benford Analysis",
       
       mainPanel(
         tabsetPanel(
-          tabPanel("Instructions", br(), includeMarkdown('instructions.Rmd'), textOutput('teste')),
+          tabPanel("Instructions",
+                   column(12, includeMarkdown('instructions.Rmd'))),
           tabPanel("Distribution of Digits",
-                  column(12,
-                         h5("The first graph concerns the observation count with respect to its first two digits, comparing it with the value expected by the Benford's Law."),
-                         h5("The second graph concerns the chi-squared statistics consisting of deviations of observed values from expected values.")
-                   ),
+                  column(12, br(), h5("The first graph concerns the observation count with respect to its first two digits, comparing it with the value expected by the Benford's Law.\n
+                                      The second graph concerns the chi-squared statistics consisting of deviations of observed values from expected values.")),
                    column(12, align = "center" ,
-                          plotOutput('plot_digits', click = "digit_click"),
+                          plotOutput('plot_digits', click = "digit_click", height = "500px"),
                           radioButtons("which_plot_digit", "",
                                        c("Digits" = "pdigit",
                                          "Rootogram" = "proot_digit",
@@ -41,12 +44,12 @@ ui <- navbarPage("Benford Analysis",
           tabPanel("Formal Tests",br(),
                    tabsetPanel(tabPanel("Second Order Test",
                                         column(12, h5("The graph concerns the count for the ordered date difference")),
-                                        column(12, align = "center" , plotOutput('plot_sec_ord'))                 
+                                        column(12, align = "center" , plotOutput('plot_sec_ord', height = "500px"))                 
                                         ),
                                tabPanel("Summation Test",
                                         column(12, h5("The first graph concerns the deviations of summation values from expected values.")),
                                         column(12, align = "center" ,
-                                               plotOutput('plot_summ_dist'),
+                                               plotOutput('plot_summ_dist', height = "500px"),
                                                radioButtons("which_plot_summ", "",
                                                             c("Summation" = "psum",
                                                               "Summation Difference" = "psumdif"), inline = T))
@@ -55,13 +58,13 @@ ui <- navbarPage("Benford Analysis",
                                        'Not Implemented'),
                                tabPanel("Mantissa Arc Test",
                                       column(12, align = "center" ,
-                                      plotOutput('plot_mantissa')),
+                                      plotOutput('plot_mantissa', height = "500px")),
                                       verbatimTextOutput("mantissa_test")
                                )
                                )
                   ),
           tabPanel("Suspect Records",
-                   numericInput("ndigits", strong('number of suspicious groups:'), 3),
+                   numericInput("ndigits", strong('Number of suspicious groups:'), 3),
                    h5('leading digits by decreasing order of discrepancies (absolute differences)'),
                    column(12, align = "center" , tableOutput('leading_digits')),
                    h5("observations of the most suspicious groups with leading digits not complying with Benford's Law"),
@@ -88,7 +91,7 @@ server <- function(input, output) {
     })
   
   output$data_column <- renderUI({
-    selectInput("column", strong("column of dataset:"), names(input_data()), selected = "Amount")
+    selectInput("column", strong("Column of dataset:"), names(input_data()), selected = "Amount")
   })
   
   records <- reactive({
@@ -96,7 +99,7 @@ server <- function(input, output) {
   })
   
   results_benford <- reactive({
-    benford(records(), input$digits)
+    benford(records(), input$digits, input$sign)
   })
   
   output$verclick <- renderDataTable({
@@ -104,8 +107,8 @@ server <- function(input, output) {
     dn <- max(results_benford()[["bfd"]]$digits)
     d_click <- round(d1 + (input$digit_click$x)*(dn - d1), 0)
     getDigits(results_benford(), input_data(), d_click)
-      # kable(align = "c") %>%
-      # kable_styling(bootstrap_options = c("striped", "bordered", "hover"), full_width = F)
+    # kable(align = "c") %>%
+    # kable_styling(bootstrap_options = c("striped", "bordered", "hover"), full_width = F)
   })
 
   
@@ -153,8 +156,8 @@ server <- function(input, output) {
     records <- extract.digits(records(), number.of.digits = input$digits)
     sp <- getSuspects(results_benford(), input_data(), how.many = input$ndigits)
     sp
-      # kable(align = "c") %>%
-      # kable_styling(bootstrap_options = c("striped", "bordered", "hover"), full_width = F)
+    # kable(align = "c") %>%
+    # kable_styling(bootstrap_options = c("striped", "bordered", "hover"), full_width = F)
   })
   
   output$report <- downloadHandler(
