@@ -6,6 +6,7 @@ library(knitr)
 library(dplyr)
 library(kableExtra)
 
+# see both graphs in the same panel
 
 ui <- navbarPage("Benford Analysis",
   theme = shinytheme("yeti"),
@@ -38,13 +39,21 @@ ui <- navbarPage("Benford Analysis",
                                        c("Digits" = "pdigit",
                                          "Rootogram" = "proot_digit",
                                          "Chi-Squared Difference" = "psquared"), inline = T),
+                          checkboxInput("option", "See all graphs in the same panel (não implementado)"),
                           dataTableOutput('verclick')
                           )
                    ),
           tabPanel("Formal Tests",br(),
-                   tabsetPanel(tabPanel("Second Order Test",
+                   tabsetPanel(tabPanel("First Order Test",
+                                        h5('The MAD ranges here\n chi-squared results...')
+                                        ),
+                               
+                               tabPanel("Second Order Test",
                                         column(12, h5("The graph concerns the count for the ordered date difference")),
-                                        column(12, align = "center" , plotOutput('plot_sec_ord', height = "500px"))                 
+                                        column(12, align = "center" , plotOutput('plot_sec_ord', height = "500px"),
+                                               radioButtons("which_plot_sec_ord", "",
+                                                            c("Second Order" = "psec",
+                                                              "Rootogram Second Order" = "proot_sec"), inline = T))                
                                         ),
                                tabPanel("Summation Test",
                                         column(12, h5("The first graph concerns the deviations of summation values from expected values.")),
@@ -114,20 +123,24 @@ server <- function(input, output) {
   
   output$plot_digits <- renderPlot({
     switch(input$which_plot_digit,
-                   pdigit = plot(results_benford(), except = c("second order", "summation","chi squared", "mantissa", "abs diff", "ex summation", "legend"), multiple=F),
-                   proot_digit = plot(results_benford(), except = c("second order", "summation","chi squared", "mantissa", "abs diff", "ex summation", "legend"), multiple=F),
-                   psquared = plot(results_benford(), except = c("digits", "second order", "summation", "mantissa", "abs diff", "ex summation", "legend"), multiple=F))
-    
+                   pdigit = plot(results_benford(), except = c("rootogram digits","second order","rootogram second order", "summation","chi squared", "mantissa", "abs diff", "ex summation", "legend"), multiple=F),
+                   proot_digit = plot(results_benford(), except = c("digits","second order", "rootogram second order", "summation","chi squared", "mantissa", "abs diff", "ex summation", "legend"), multiple=F),
+                   psquared = plot(results_benford(), except = c("digits","second order", "rootogram second order", "summation", "mantissa", "abs diff", "ex summation", "legend"), multiple=F))
   })
   
+
   output$plot_sec_ord <- renderPlot({
-    plot(results_benford(), except = c("digits", "summation", "mantissa","abs diff", "chi squared", "ex summation", "legend"), multiple=T)
+    plot(results_benford(), except = c("digits","rootogram digits", "rootogram second order", "summation", "mantissa","abs diff", "chi squared", "ex summation", "legend"), multiple=T)
+    switch(input$which_plot_sec_ord,
+           psec = plot(results_benford(), except = c("digits","rootogram digits","rootogram second order", "summation","chi squared", "mantissa", "abs diff", "ex summation", "legend"), multiple=F),
+           proot_sec = plot(results_benford(), except = c("digits","second order", "second order", "summation","chi squared", "mantissa", "abs diff", "ex summation", "legend"), multiple=F))
   })
+  
   
   output$plot_summ_dist <- renderPlot({
     switch(input$which_plot_summ,
-           psum = plot(results_benford(), except = c("digits", "second order", "mantissa","abs diff", "chi squared",  "ex summation", "legend"), multiple=T),
-           psumdif = plot(results_benford(), except = c("summation", "digits", "second order","abs diff",  "mantissa", "chi squared", "legend"), multiple=T))
+           psum = plot(results_benford(), except = c("digits","rootogram digits", "second order","rootogram second order", "mantissa","abs diff", "chi squared",  "ex summation", "legend"), multiple=T),
+           psumdif = plot(results_benford(), except = c("summation", "digits","rootogram digits", "second order","rootogram second order","abs diff",  "mantissa", "chi squared", "legend"), multiple=T))
   })
   
   output$mantissa_test <- renderPrint({
@@ -135,7 +148,7 @@ server <- function(input, output) {
   })
   
   output$plot_mantissa <- renderPlot({
-    plot(results_benford(), except = c("digits","second order", "summation",'ex summation', "chi squared", "abs diff","legend"))
+    plot(results_benford(), except = c("digits","rootogram digits","second order","rootogram second order", "summation",'ex summation', "chi squared", "abs diff","legend"))
   })
   
   

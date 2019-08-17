@@ -19,3 +19,5 @@ Benford’s Law provides the expected frequency of digits in certain types of ta
 ## Subset your data
 
 Using the absolute difference (difference between actual and expected counts), the data can be sort by the statistic to select the data noncomform to a Benford curve. The suspicious groups are those with the leading digits have the greatest measure of absolute difference.
+
+## Custom Report
