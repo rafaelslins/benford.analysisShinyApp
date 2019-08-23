@@ -38,14 +38,15 @@ ui <- navbarPage("Benford Analysis",
                                        c("Digits" = "pdigit",
                                          "Rootogram" = "proot_digit",
                                          "Chi-Squared Difference" = "psquared"), inline = T),
-                          dataTableOutput('verclick')
+                          dataTableOutput('selected_data')
                           ),
                   column(2, 
                          'Plot Options',
                          selectInput("col.digit.dist", strong("Color Plot Acoording:"), choices = c("Default", "Absolute Diff.", "Difference", "Chi-Squared")),
                          checkboxInput("option", "See graphs in the same panel"),
                          checkboxInput("err.bound", "Error bounds"),
-                         numericInput("alpha", strong("Significance level:"), value = 0.05, step = 0.01, min = 0, max = 1))
+                         numericInput("alpha", strong("Significance level:"), value = 0.05, step = 0.01, min = 0, max = 1),
+                         downloadButton(outputId = "down", label = "Download the plot"))
                    ),
           tabPanel("Auxiliary Tests",br(),
                    tabsetPanel(tabPanel("First Order Test",
@@ -122,7 +123,7 @@ server <- function(input, output) {
     round(d1 + (input$digit_click$x)*(dn - d1)*1/(input$digit_click$domain$right - input$digit_click$domain$left), 0)
   })
   
-  output$verclick <- renderDataTable({
+  output$selected_data <- renderDataTable({
     getDigits(results_benford(), input_data(), d_click())
   })
 
@@ -137,37 +138,51 @@ server <- function(input, output) {
   #   col.bar()
   #  })
   
-  output$plot_digits <- renderPlot({
+  p_digits <- function(){
     ndigts <- length(results_benford()[["bfd"]]$digits)
     col.b <- rep("green", ndigts)
     col.b[!(results_benford()[["bfd"]]$digits%in%d_click())] <- "lightblue"
     switch(input$which_plot_digit,
-                   pdigit = plot(results_benford(), col.bar = col.b, select = c("digits")),
-                   proot_digit = plot(results_benford(), col.bar = col.b,  select = "rootogram digits"),
-                   psquared = plot(results_benford(), select = "chi squared"))
+           pdigit = plot(results_benford(), col.bar = col.b, select = c("digits")),
+           proot_digit = plot(results_benford(), col.bar = col.b,  select = "rootogram digits"),
+           psquared = plot(results_benford(), select = "chi squared"))
+  }
+  
+  output$plot_digits <- renderPlot({
+    p_digits()
   })
-
-  output$plot_sec_ord <- renderPlot({
+  
+  p_sec_ord <- function(){
     switch(input$which_plot_sec_ord,
            psec = plot(results_benford(), select = "second order"),
            proot_sec = plot(results_benford(), select = "rootogram second order"))
+  }
+  
+  output$plot_sec_ord <- renderPlot({
+    p_sec_ord()
   })
   
-  
-  output$plot_summ_dist <- renderPlot({
+  p_summ_dist <- function(){
     switch(input$which_plot_summ,
            psum = plot(results_benford(), select = "summation"),
            psumdif = plot(results_benford(), select = "ex summation"))
+  }
+  
+  output$plot_summ_dist <- renderPlot({
+    p_summ_dist()
   })
   
   output$mantissa_test <- renderPrint({
     results_benford()$stats$mantissa.arc.test
   })
   
-  output$plot_mantissa <- renderPlot({
+  p_mantissa <- function(){
     plot(results_benford(), select = "mantissa")
-  })
+  }
   
+  output$plot_mantissa <- renderPlot({
+    p_mantissa()
+  })
   
   output$results_benf <- renderPrint({
     results_benford()
@@ -197,6 +212,17 @@ server <- function(input, output) {
     sp <- getSuspects(results_benford(), input_data(), by = by.metric, how.many = input$ndigits)
     sp
   })
+  
+  output$down <- downloadHandler(
+    filename =  function() {
+      paste("plot", "pdf", sep=".")
+    },
+    content = function(file) {
+      pdf(file, width = 20, bg = "transparent")
+      p_digits()
+      dev.off()
+    } 
+  )
   
   output$report <- downloadHandler(
     filename = "report.pdf",
