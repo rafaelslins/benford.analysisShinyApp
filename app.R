@@ -24,7 +24,7 @@ ui <- navbarPage("Benford Analysis",
            column(12, align = "center" , downloadButton("report", "Download report")))
       ),
       
-      mainPanel(
+      mainPanel(width = 9,
         tabsetPanel(
           tabPanel("Instructions",
                    column(12, includeMarkdown('instructions.Rmd'))),
@@ -42,8 +42,9 @@ ui <- navbarPage("Benford Analysis",
                           ),
                   column(2, 
                          'Plot Options',
-                         selectInput("col.digit.dist", strong("Color Plot Acoording:"), choices = c("Default", "Absolute Diff.", "Difference", "Chi-Squared")),
-                         checkboxInput("option", "See graphs in the same panel"),
+                         selectInput("col.by", strong("Color Plot Acoording:"), choices = c("Default", "Chi-Squared", "Z-statistic", "Absolute Diff.", "Difference")),
+                         numericInput("nclasses", "Number of classes:", value = 2, step = 1,min = 2),
+                         #checkboxInput("option", "See graphs in the same panel"),
                          checkboxInput("err.bound", "Error bounds"),
                          numericInput("alpha", strong("Significance level:"), value = 0.05, step = 0.01, min = 0, max = 1),
                          downloadButton(outputId = "down", label = "Download the plot"))
@@ -138,13 +139,39 @@ server <- function(input, output) {
   #   col.bar()
   #  })
   
+  color_bars <- function(){
+    scale1 <- colorRampPalette(c("lightblue", "blue"))
+    scale2 <- colorRampPalette(c("red","orange","lightblue", "blue"))
+    switch(input$col.by,
+           "Default" = "lightblue",
+           "Absolute Diff." = {
+             absolute.diff <- results_benford()[["bfd"]]$absolute.diff
+             absolute.diff.classes <- cut(absolute.diff, breaks = seq(min(absolute.diff), max(absolute.diff), length.out = input$nclasses + 1), include.lowest = T)   
+             as.character(factor(absolute.diff.classes, labels = scale1(input$nclasses), levels = levels(absolute.diff.classes)))},
+           "Difference" = {
+             difference <- results_benford()[["bfd"]]$difference
+             difference.classes <- cut(difference, breaks = seq(min(difference), max(difference), length.out = input$nclasses + 1), include.lowest = T)   
+             as.character(factor(difference.classes, labels = scale2(input$nclasses), levels = levels(difference.classes)))},
+           "Chi-Squared" = {
+             squared.diff <- results_benford()[["bfd"]]$squared.diff
+             squared.diff.classes <- cut(squared.diff, breaks = seq(min(squared.diff), max(squared.diff), length.out = input$nclasses + 1), include.lowest = T)   
+             as.character(factor(squared.diff.classes, labels = scale1(input$nclasses), levels = levels(squared.diff.classes)))},
+           "Z-statistic" ={
+             z.statistic <- results_benford()[["bfd"]]$z.statistic
+             z.statistic.classes <- cut(z.statistic, breaks = seq(min(z.statistic), max(z.statistic), length.out = input$nclasses + 1), include.lowest = T)   
+             as.character(factor(z.statistic.classes, labels = scale2(input$nclasses), levels = levels(z.statistic.classes)))
+           }
+    )
+  }
+  
   p_digits <- function(){
-    ndigts <- length(results_benford()[["bfd"]]$digits)
-    col.b <- rep("green", ndigts)
-    col.b[!(results_benford()[["bfd"]]$digits%in%d_click())] <- "lightblue"
+    # ndigts <- length(results_benford()[["bfd"]]$digits)
+    # col.b <- rep("green", ndigts)
+    # col.b[!(results_benford()[["bfd"]]$digits%in%d_click())] <- "lightblue"
+    
     switch(input$which_plot_digit,
-           pdigit = plot(results_benford(), col.bar = col.b, select = c("digits")),
-           proot_digit = plot(results_benford(), col.bar = col.b,  select = "rootogram digits"),
+           pdigit = plot(results_benford(), select = "digits", col.bar = color_bars(), err.bounds = input$err.bound, alpha = input$alpha),
+           proot_digit = plot(results_benford(), select = "rootogram digits", col.bar = color_bars(), err.bounds = input$err.bound, alpha = input$alpha),
            psquared = plot(results_benford(), select = "chi squared"))
   }
   
@@ -173,7 +200,7 @@ server <- function(input, output) {
   })
   
   output$mantissa_test <- renderPrint({
-    results_benford()$stats$mantissa.arc.test
+    marc(results_benford())
   })
   
   p_mantissa <- function(){
