@@ -43,9 +43,11 @@ ui <- navbarPage("Benford Analysis",
                   column(2, 
                          'Plot Options',
                          selectInput("col.digit.dist", strong("Color Plot Acoording:"), choices = c("Default", "Absolute Diff.", "Difference", "Chi-Squared")),
-                         checkboxInput("option", "See graphs in the same panel"))
+                         checkboxInput("option", "See graphs in the same panel"),
+                         checkboxInput("err.bound", "Error bounds"),
+                         numericInput("alpha", strong("Significance level:"), value = 0.05, step = 0.01, min = 0, max = 1))
                    ),
-          tabPanel("Formal Tests",br(),
+          tabPanel("Auxiliary Tests",br(),
                    tabsetPanel(tabPanel("First Order Test",
                                         h5('The MAD ranges here\n chi-squared results...')
                                         ),
@@ -140,23 +142,22 @@ server <- function(input, output) {
     col.b <- rep("green", ndigts)
     col.b[!(results_benford()[["bfd"]]$digits%in%d_click())] <- "lightblue"
     switch(input$which_plot_digit,
-                   pdigit = plot(results_benford(), col.bar = col.b, except = c("rootogram digits","second order","rootogram second order", "summation","chi squared", "mantissa", "abs diff", "ex summation", "legend"), multiple=F),
-                   proot_digit = plot(results_benford(), col.bar = col.b,  except = c("digits","second order", "rootogram second order", "summation","chi squared", "mantissa", "abs diff", "ex summation", "legend"), multiple=F),
-                   psquared = plot(results_benford(), except = c("digits","second order", "rootogram second order", "summation", "mantissa", "abs diff", "ex summation", "legend"), multiple=F))
+                   pdigit = plot(results_benford(), col.bar = col.b, select = c("digits")),
+                   proot_digit = plot(results_benford(), col.bar = col.b,  select = "rootogram digits"),
+                   psquared = plot(results_benford(), select = "chi squared"))
   })
 
   output$plot_sec_ord <- renderPlot({
-    plot(results_benford(), except = c("digits","rootogram digits", "rootogram second order", "summation", "mantissa","abs diff", "chi squared", "ex summation", "legend"), multiple=T)
     switch(input$which_plot_sec_ord,
-           psec = plot(results_benford(), except = c("digits","rootogram digits","rootogram second order", "summation","chi squared", "mantissa", "abs diff", "ex summation", "legend"), multiple=F),
-           proot_sec = plot(results_benford(), except = c("digits","second order", "second order", "summation","chi squared", "mantissa", "abs diff", "ex summation", "legend"), multiple=F))
+           psec = plot(results_benford(), select = "second order"),
+           proot_sec = plot(results_benford(), select = "rootogram second order"))
   })
   
   
   output$plot_summ_dist <- renderPlot({
     switch(input$which_plot_summ,
-           psum = plot(results_benford(), except = c("digits","rootogram digits", "second order","rootogram second order", "mantissa","abs diff", "chi squared",  "ex summation", "legend"), multiple=T),
-           psumdif = plot(results_benford(), except = c("summation", "digits","rootogram digits", "second order","rootogram second order","abs diff",  "mantissa", "chi squared", "legend"), multiple=T))
+           psum = plot(results_benford(), select = "summation"),
+           psumdif = plot(results_benford(), select = "ex summation"))
   })
   
   output$mantissa_test <- renderPrint({
@@ -164,7 +165,7 @@ server <- function(input, output) {
   })
   
   output$plot_mantissa <- renderPlot({
-    plot(results_benford(), except = c("digits","rootogram digits","second order","rootogram second order", "summation",'ex summation', "chi squared", "abs diff","legend"))
+    plot(results_benford(), select = "mantissa")
   })
   
   
