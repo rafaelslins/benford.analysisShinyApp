@@ -51,8 +51,8 @@ ui <- navbarPage("Benford Analysis",
                    ),
           tabPanel("Auxiliary Tests",br(),
                    tabsetPanel(tabPanel("First Order Test",
-                                        h5('The MAD ranges here\n chi-squared results...')
-                                        ),
+                                        includeMarkdown("nigrini_table.Rmd"),
+                                        h5("Nigrini (2012)")),
                                
                                tabPanel("Second Order Test",
                                         column(12, h5("The graph concerns the count for the ordered date difference")),

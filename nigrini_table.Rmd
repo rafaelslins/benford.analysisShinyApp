@@ -1,0 +1,20 @@
+---
+output: html_document
+---
+
+
+| Digits             | Range              | Conclusion                       |
+|--------------------|--------------------|----------------------------------|
+| First Digits       | 0.000 to 0.006     | Close conformity                 |
+|                    | 0.006 to 0.012     | Acceptable conformity            |
+|                    | 0.012 to 0.015     | Marginally acceptable conformity |
+|                    | Above 0.015        | Nonconformity                    |
+| First-Two Digits   | 0.0000 to 0.0012   | Close conformity                 |
+|                    | 0.0012 to 0.0018   | Acceptable conformity            |
+|                    | 0.0018 to 0.0022   | Marginally acceptable conformity |
+|                    | Above 0.0022       | Nonconformity                    |
+| First-Three Digits | 0.00000 to 0.00036 | Close conformity                 |
+|                    | 0.00036 to 0.00044 | Acceptable conformity            |
+|                    | 0.00044 to 0.00050 | Marginally acceptable conformity |
+|                    | Above 0.00050      | Nonconformity                    |
+
